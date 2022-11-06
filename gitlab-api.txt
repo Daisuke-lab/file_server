@@ -1,0 +1,6 @@
+Get commit diff
+https://gitlab.info-tools.site/api/v4/projects/root%2Fkikuchi-practice/repository/commits/master/diff?private_token=xMRfC4UvRetNo8xPDXrt
+
+
+Ref
+https://docs.gitlab.com/ee/api/commits.html#get-a-single-commit

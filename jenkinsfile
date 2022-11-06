@@ -1,0 +1,59 @@
+ pipeline {
+    agent any
+    parameters {
+        // 公式ドキュメントではchoiceの場合、choices: ['one', 'two', 'three']
+        // のようにかけるそうですが、なぜか私の環境ではsyntax errorがでてしまったため、
+        // 以下のように\n改行コードを入れることでセレクトボックス入力が可能になりました。
+        choice(name: 'BRANCH_OR_TAG', choices: 'Branch\nTag\n', description: 'Select Checkout Type')
+        string(name: 'CHECKOUT_POINT', defaultValue: 'develop / v1.0.0', description: 'Input Branch / Tag Name')
+        choice(name: 'SERVERS', choices: 'hogehoge.com\nfugafuga.com\n', description: 'Select Deploying Servers')
+    }
+    stages {
+       stage('gitlab') {
+          steps {
+            echo 'Notify GitLab'
+            echo    "gitlabSourceBranch ${env.gitlabSourceBranch}"
+            echo    "gitlabBranch ${env.gitlabBranch}"
+            echo    "gitlabActionType ${env.gitlabActionType}"
+            echo    "gitlabUserName ${env.gitlabUserName}"
+            echo    "gitlabUserUsername ${env.gitlabUserUsername}"
+            echo    "gitlabUserEmail ${env.gitlabUserEmail}"
+            echo    "gitlabSourceRepoHomepage ${env.gitlabSourceRepoHomepage}"
+            echo    "gitlabSourceRepoName ${env.gitlabSourceRepoName}"
+            echo    "gitlabSourceNamespace ${env.gitlabSourceNamespace}"
+            echo    "gitlabSourceRepoURL ${env.gitlabSourceRepoURL}"
+            echo    "gitlabSourceRepoSshUrl ${env.gitlabSourceRepoSshUrl}"
+            echo    "gitlabSourceRepoHttpUrl ${env.gitlabSourceRepoHttpUrl}"
+            echo    "gitlabMergeRequestTitle ${env.gitlabMergeRequestTitle}"
+            echo    "gitlabMergeRequestDescription ${env.gitlabMergeRequestDescription}"
+            echo    "gitlabMergeRequestId ${env.gitlabMergeRequestId}"
+            echo    "gitlabMergeRequestIid ${env.gitlabMergeRequestIid}"
+            echo    "gitlabMergeRequestState ${env.gitlabMergeRequestState}"
+            echo    "gitlabMergedByUser ${env.gitlabMergedByUser}"
+            echo    "gitlabMergeRequestAssignee ${env.gitlabMergeRequestAssignee}"
+            echo    "gitlabMergeRequestLastCommit ${env.gitlabMergeRequestLastCommit}"
+            echo    "gitlabMergeRequestTargetProjectId ${env.gitlabMergeRequestTargetProjectId}"
+            echo    "gitlabTargetBranch ${env.gitlabTargetBranch}"
+            echo    "gitlabTargetRepoName ${env.gitlabTargetRepoName}"
+            echo    "gitlabTargetNamespace ${env.gitlabTargetNamespace}"
+            echo    "gitlabTargetRepoSshUrl ${env.gitlabTargetRepoSshUrl}"
+            echo    "gitlabTargetRepoHttpUrl ${env.gitlabTargetRepoHttpUrl}"
+            echo    "gitlabBefore ${env.gitlabBefore}"
+            echo    "gitlabAfter ${env.gitlabAfter}"
+            echo    "gitlabTriggerPhrase ${env.gitlabTriggerPhrase}"
+            script {
+                def response = httpRequest "https://gitlab.info-tools.site/api/v4/projects/root%2Fkikuchi-practice/repository/commits/master/diff?private_token=xMRfC4UvRetNo8xPDXrt"
+                println('Status: '+response.status)
+                println('Response: '+response.content)
+                def slurper = new groovy.json.JsonSlurper()
+                def commitDiffs = slurper.parseText(response.content)
+                for (commitDiff in commitDiffs) {
+                    println commitDiff.old_path
+                }
+            }
+             updateGitlabCommitStatus name: 'build', state: 'pending'
+             updateGitlabCommitStatus name: 'build', state: 'success'
+          }
+       }
+    }
+ }
